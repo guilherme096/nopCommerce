@@ -1,7 +1,11 @@
-﻿using Autofac.Extensions.DependencyInjection;
+using Autofac.Extensions.DependencyInjection;
 using Nop.Core.Configuration;
 using Nop.Core.Infrastructure;
+using Nop.Web.Infrastructure.OpenTelemetry;
 using Nop.Web.Framework.Infrastructure.Extensions;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 namespace Nop.Web;
 
@@ -21,6 +25,16 @@ public partial class Program
 
         //load application settings
         builder.Services.ConfigureApplicationSettings(builder);
+
+        builder.Services.AddOpenTelemetry()
+            .ConfigureResource(resource => resource.AddService("nopcommerce.web"))
+            .WithTracing(tracing => tracing
+                .AddAspNetCoreInstrumentation()
+                .AddSource(CatalogSearchTelemetry.ActivitySourceName)
+                .AddOtlpExporter())
+            .WithMetrics(metrics => metrics
+                .AddMeter(CatalogSearchTelemetry.MeterName)
+                .AddOtlpExporter());
 
         var appSettings = Singleton<AppSettings>.Instance;
         var useAutofac = appSettings.Get<CommonConfig>().UseAutofac;

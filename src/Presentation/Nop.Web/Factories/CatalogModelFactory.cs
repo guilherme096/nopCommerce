@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Diagnostics;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Newtonsoft.Json;
 using Nop.Core;
 using Nop.Core.Caching;
@@ -22,6 +23,7 @@ using Nop.Services.Vendors;
 using Nop.Web.Framework.Events;
 using Nop.Web.Framework.Mvc.Routing;
 using Nop.Web.Infrastructure.Cache;
+using Nop.Web.Infrastructure.OpenTelemetry;
 using Nop.Web.Models.Catalog;
 using Nop.Web.Models.Media;
 
@@ -1687,8 +1689,9 @@ public partial class CatalogModelFactory : ICatalogModelFactory
                 var searchInDescriptions = false;
                 var searchInProductTags = false;
                 var vendorId = 0;
+                var isAdvancedSearch = searchModel.advs;
 
-                if (searchModel.advs)
+                if (isAdvancedSearch)
                 {
                     //advanced search
                     var categoryId = searchModel.cid;
@@ -1711,6 +1714,18 @@ public partial class CatalogModelFactory : ICatalogModelFactory
                     searchInDescriptions = searchModel.sid;
                     searchInProductTags = searchModel.sit;
                 }
+
+                var hasSearchTerm = !string.IsNullOrEmpty(searchTerms);
+                var hasCategoryFilter = categoryIds.Count > 0;
+                var hasManufacturerFilter = manufacturerId > 0;
+                var hasVendorFilter = vendorId > 0;
+
+                using var searchActivity = CatalogSearchTelemetry.ActivitySource.StartActivity(CatalogSearchTelemetry.SearchActivityName);
+                searchActivity?.SetTag(CatalogSearchTelemetry.HasSearchTermTagName, hasSearchTerm);
+                searchActivity?.SetTag(CatalogSearchTelemetry.IsAdvancedTagName, isAdvancedSearch);
+                searchActivity?.SetTag(CatalogSearchTelemetry.HasCategoryFilterTagName, hasCategoryFilter);
+                searchActivity?.SetTag(CatalogSearchTelemetry.HasManufacturerFilterTagName, hasManufacturerFilter);
+                searchActivity?.SetTag(CatalogSearchTelemetry.HasVendorFilterTagName, hasVendorFilter);
 
                 var workingLanguage = await _workContext.GetWorkingLanguageAsync();
 
@@ -1776,6 +1791,23 @@ public partial class CatalogModelFactory : ICatalogModelFactory
                     languageId: workingLanguage.Id,
                     orderBy: (ProductSortingEnum)command.OrderBy,
                     vendorId: vendorId);
+
+                var searchResultCount = products.TotalCount;
+                searchActivity?.SetTag(CatalogSearchTelemetry.ResultCountTagName, searchResultCount);
+
+                if (searchResultCount == 0)
+                {
+                    var metricTags = new TagList
+                    {
+                        { CatalogSearchTelemetry.HasSearchTermTagName, hasSearchTerm },
+                        { CatalogSearchTelemetry.IsAdvancedTagName, isAdvancedSearch },
+                        { CatalogSearchTelemetry.HasCategoryFilterTagName, hasCategoryFilter },
+                        { CatalogSearchTelemetry.HasManufacturerFilterTagName, hasManufacturerFilter },
+                        { CatalogSearchTelemetry.HasVendorFilterTagName, hasVendorFilter }
+                    };
+
+                    CatalogSearchTelemetry.SearchZeroResultsCounter.Add(1, metricTags);
+                }
 
                 //search term statistics
                 if (!string.IsNullOrEmpty(searchTerms))

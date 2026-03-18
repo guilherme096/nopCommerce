@@ -1,0 +1,25 @@
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
+
+namespace Nop.Web.Infrastructure.OpenTelemetry;
+
+public static class CatalogSearchTelemetry
+{
+    public const string ActivitySourceName = "Nop.Web.Catalog";
+    public const string MeterName = "Nop.Web.Catalog";
+    public const string SearchActivityName = "catalog.search";
+
+    public const string ResultCountTagName = "catalog.search.result_count";
+    public const string HasSearchTermTagName = "catalog.search.has_search_term";
+    public const string IsAdvancedTagName = "catalog.search.is_advanced";
+    public const string HasCategoryFilterTagName = "catalog.search.has_category_filter";
+    public const string HasManufacturerFilterTagName = "catalog.search.has_manufacturer_filter";
+    public const string HasVendorFilterTagName = "catalog.search.has_vendor_filter";
+
+    public static readonly ActivitySource ActivitySource = new(ActivitySourceName);
+    public static readonly Meter Meter = new(MeterName);
+    public static readonly Counter<long> SearchZeroResultsCounter = Meter.CreateCounter<long>(
+        "catalog_search_zero_results_total",
+        unit: "{search}",
+        description: "Total number of catalog searches that returned zero products.");
+}
