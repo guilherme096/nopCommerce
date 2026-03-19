@@ -1,0 +1,49 @@
+services:
+  nopcommerce_web:
+    build: .
+    container_name: nopcommerce
+    ports:
+      - "80:80"
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+    depends_on:
+      - nopcommerce_database
+      - otel-collector
+
+  nopcommerce_database:
+    image: "mcr.microsoft.com/mssql/server:2019-latest"
+    container_name: nopcommerce_mssql_server
+    user: "0:0"
+    environment:
+      SA_PASSWORD: "nopCommerce_db_password"
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Express"
+    volumes:
+      - mssql-data:/var/opt/mssql
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.96.0
+    container_name: otel-collector
+    volumes:
+      - ./observability/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml:ro
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    depends_on:
+      - tempo
+
+  tempo:
+    image: grafana/tempo:2.4.1
+    container_name: tempo
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./observability/tempo.yaml:/etc/tempo.yaml:ro
+      - tempo-data:/tmp/tempo
+    ports:
+      - "3200:3200"
+
+volumes:
+  nopcommerce_data:
+  tempo-data:
+  mssql-data:
