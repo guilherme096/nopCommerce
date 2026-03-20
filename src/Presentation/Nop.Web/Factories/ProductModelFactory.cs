@@ -29,6 +29,7 @@ using Nop.Services.Stores;
 using Nop.Services.Tax;
 using Nop.Services.Vendors;
 using Nop.Web.Infrastructure.Cache;
+using Nop.Web.Infrastructure.OpenTelemetry;
 using Nop.Web.Models.Catalog;
 using Nop.Web.Models.Common;
 using Nop.Web.Models.Media;
@@ -1440,6 +1441,16 @@ public partial class ProductModelFactory : IProductModelFactory
     {
         ArgumentNullException.ThrowIfNull(product);
 
+        using var activity = ProductDetailsTelemetry.ActivitySource.StartActivity(
+            ProductDetailsTelemetry.ProductDetailsActivityName);
+        activity?.SetTag(ProductDetailsTelemetry.ProductIdTagName, product.Id);
+        activity?.SetTag(ProductDetailsTelemetry.ProductTypeTagName, product.ProductType.ToString());
+        activity?.SetTag(ProductDetailsTelemetry.ProductIsAssociatedTagName, isAssociatedProduct);
+
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        try
+        {
+
         //standard properties
         var model = new ProductDetailsModel
         {
@@ -1670,6 +1681,17 @@ public partial class ProductModelFactory : IProductModelFactory
         }
 
         return model;
+
+        }
+        finally
+        {
+            stopwatch.Stop();
+            ProductDetailsTelemetry.BuildDurationHistogram.Record(
+                stopwatch.Elapsed.TotalMilliseconds,
+                new KeyValuePair<string, object?>(ProductDetailsTelemetry.ProductIdTagName, product.Id),
+                new KeyValuePair<string, object?>(ProductDetailsTelemetry.ProductTypeTagName, product.ProductType.ToString()),
+                new KeyValuePair<string, object?>(ProductDetailsTelemetry.ProductIsAssociatedTagName, isAssociatedProduct));
+        }
     }
 
     /// <summary>
