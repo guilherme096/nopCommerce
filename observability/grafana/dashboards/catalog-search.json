@@ -1,0 +1,164 @@
+{
+  "uid": "catalog-search",
+  "title": "Catalog Observability",
+  "tags": ["nopcommerce", "catalog", "search", "product-details"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 2,
+  "refresh": "30s",
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Zero-Result Search Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(catalog_search_zero_results_total[5m])",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 15,
+            "pointSize": 5,
+            "showPoints": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": { "mode": "single" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Total Zero-Result Searches",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(catalog_search_zero_results_total)",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 50 },
+              { "color": "red", "value": 200 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 3,
+      "title": "Explore Traces in Tempo",
+      "type": "text",
+      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 8 },
+      "options": {
+        "mode": "markdown",
+        "content": "## Exploring `catalog.search` and `catalog.product_details` Traces\n\nTo inspect individual operations:\n\n1. Go to **Explore** (compass icon in the sidebar)\n2. Select the **Tempo** datasource\n3. Choose **Search** tab and set **Span Name** to `catalog.search` or `catalog.product_details`\n4. Adjust the time range and click **Run query**\n5. Click any trace to see its full span details, including tags like `product.id` and `product.type`\n\nThis helps identify slow searches, correlate zero-result searches with specific keywords, and understand the end-to-end request lifecycle."
+      }
+    },
+    {
+      "id": 4,
+      "title": "Product Details Build Duration (p50 / p95 / p99)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.5, rate(catalog_product_details_model_build_duration_bucket[5m]))",
+          "legendFormat": "p50"
+        },
+        {
+          "refId": "B",
+          "expr": "histogram_quantile(0.95, rate(catalog_product_details_model_build_duration_bucket[5m]))",
+          "legendFormat": "p95"
+        },
+        {
+          "refId": "C",
+          "expr": "histogram_quantile(0.99, rate(catalog_product_details_model_build_duration_bucket[5m]))",
+          "legendFormat": "p99"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 10,
+            "pointSize": 5,
+            "showPoints": "auto"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Product Details Build Duration Heatmap",
+      "type": "heatmap",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(catalog_product_details_model_build_duration_bucket[5m])",
+          "format": "heatmap",
+          "legendFormat": "{{le}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "options": {
+        "calculate": false,
+        "yAxis": {
+          "unit": "ms"
+        },
+        "color": {
+          "scheme": "Oranges",
+          "mode": "scheme"
+        },
+        "tooltip": {
+          "show": true
+        }
+      }
+    }
+  ]
+}
