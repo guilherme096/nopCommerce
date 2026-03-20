@@ -4,6 +4,8 @@ services:
     container_name: nopcommerce
     ports:
       - "80:80"
+    volumes:
+      - nopcommerce_data:/app/App_Data
     environment:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
       - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
@@ -12,6 +14,7 @@ services:
       - otel-collector
 
   nopcommerce_database:
+    platform: linux/amd64
     image: "mcr.microsoft.com/mssql/server:2019-latest"
     container_name: nopcommerce_mssql_server
     user: "0:0"
@@ -42,6 +45,20 @@ services:
       - tempo-data:/tmp/tempo
     ports:
       - "3200:3200"
+
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    container_name: prometheus
+    user: "0:0"
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.path=/prometheus"]
+    volumes:
+      - ./observability/prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+    tmpfs:
+      - /prometheus:size=256m
+    ports:
+      - "9090:9090"
+    depends_on:
+      - otel-collector
 
 volumes:
   nopcommerce_data:
