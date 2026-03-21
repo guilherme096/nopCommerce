@@ -22,4 +22,18 @@ public static class CatalogSearchTelemetry
         "catalog_search_zero_results_total",
         unit: "{search}",
         description: "Total number of catalog searches that returned zero products.");
+
+    // Browse metrics
+    public const string BrowseTypeTagName = "catalog.browse.type";
+    public const string BrowseResultCountTagName = "catalog.browse.result_count";
+
+    public static readonly Histogram<double> BrowseModelBuildDurationHistogram = Meter.CreateHistogram<double>(
+        "catalog_browse_model_build_duration",
+        unit: "ms",
+        description: "Time to build catalog browse model (category/manufacturer/vendor)");
+
+    public static readonly Counter<long> BrowseZeroResultsCounter = Meter.CreateCounter<long>(
+        "catalog_browse_zero_results_total",
+        unit: "{browse}",
+        description: "Total catalog browse requests that returned zero products.");
 }

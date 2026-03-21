@@ -87,7 +87,10 @@ public partial class NopStartup : INopStartup
         //factories
         services.AddScoped<Factories.IAddressModelFactory, Factories.AddressModelFactory>();
         services.AddScoped<Factories.IBlogModelFactory, Factories.BlogModelFactory>();
-        services.AddScoped<Factories.ICatalogModelFactory, Factories.CatalogModelFactory>();
+        services.AddScoped<Factories.CatalogModelFactory>();
+        services.AddScoped<Factories.ICatalogModelFactory>(sp =>
+            new OpenTelemetry.CatalogModelFactoryTelemetryDecorator(
+                sp.GetRequiredService<Factories.CatalogModelFactory>()));
         services.AddScoped<Factories.ICheckoutModelFactory, Factories.CheckoutModelFactory>();
         services.AddScoped<Factories.ICommonModelFactory, Factories.CommonModelFactory>();
         services.AddScoped<Factories.ICountryModelFactory, Factories.CountryModelFactory>();
@@ -98,7 +101,10 @@ public partial class NopStartup : INopStartup
         services.AddScoped<Factories.INewsLetterModelFactory, Factories.NewsLetterModelFactory>();
         services.AddScoped<Factories.IOrderModelFactory, Factories.OrderModelFactory>();
         services.AddScoped<Factories.IPrivateMessagesModelFactory, Factories.PrivateMessagesModelFactory>();
-        services.AddScoped<Factories.IProductModelFactory, Factories.ProductModelFactory>();
+        services.AddScoped<Factories.ProductModelFactory>();
+        services.AddScoped<Factories.IProductModelFactory>(sp =>
+            new OpenTelemetry.ProductModelFactoryTelemetryDecorator(
+                sp.GetRequiredService<Factories.ProductModelFactory>()));
         services.AddScoped<Factories.IProfileModelFactory, Factories.ProfileModelFactory>();
         services.AddScoped<Factories.IReturnRequestModelFactory, Factories.ReturnRequestModelFactory>();
         services.AddScoped<Factories.IShoppingCartModelFactory, Factories.ShoppingCartModelFactory>();
