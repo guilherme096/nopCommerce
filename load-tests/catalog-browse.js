@@ -3,18 +3,11 @@ import { sleep } from 'k6';
 
 export const options = {
   scenarios: {
-    baseline: {
-      executor: 'constant-vus',
-      vus: 5,
-      duration: '2m',
-      startTime: '0s',
-      exec: 'baselineScenario',
-    },
     intense: {
       executor: 'constant-vus',
-      vus: 20,
-      duration: '2m',
-      startTime: '2m',
+      vus: 60,
+      duration: '5m',
+      startTime: '0s',
       exec: 'intenseScenario',
     },
   },
@@ -60,12 +53,17 @@ const MANUFACTURERS = ['apple', 'hp', 'nike'];
 const SEARCH_TERMS = ['phone', 'laptop', 'computer', 'book', 'shirt', 'camera'];
 const ZERO_RESULT_TERMS = ['xyznoexist', 'qqqqq', 'asdfnotfound', 'noresulthere'];
 
+const INTENSE_CONFIG = {
+  browseCount: 3,
+  priceHeavyPdpCount: 2,
+  regularPdpCount: 1,
+  searchCount: 3,
+  emptyBrowseCount: 1,
+  searchZeroResultRate: 0.6,
+};
+
 function pick(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
-}
-
-function think() {
-  sleep(1 + Math.random() * 2);
 }
 
 function thinkFast() {
@@ -116,60 +114,36 @@ function visitSearch(thinkFn, zeroResultRate, tagSuffix = 'primary') {
   thinkFn();
 }
 
-function fullJourney({
-  thinkFn,
-  followUpZeroResultRate,
-  extraBrowseCount = 0,
-  extraSearchCount = 0,
-  extraPriceHeavyPdpCount = 0,
-}) {
-  // 1. Homepage
-  http.get(BASE_URL + '/', { tags: { name: 'homepage' } });
-  thinkFn();
-
-  // 2-4. Normal browse/search/PDP path with price rendering work
-  browseListing(thinkFn);
-  visitProductDetails(thinkFn, true);
-  browseListing(thinkFn);
-  visitSearch(thinkFn, 0, 'primary');
-
-  // 5. Follow-up search sometimes misses to model normal zero-result behavior
-  visitSearch(thinkFn, followUpZeroResultRate, 'follow_up');
-
-  // 6. Another PDP hit to keep product-details and pricing active
-  visitProductDetails(thinkFn);
-
-  // 7+. Intense mode can lean harder on listing and price-heavy product traffic
-  for (let i = 0; i < extraBrowseCount; i += 1) {
-    browseListing(thinkFn);
-  }
-
-  for (let i = 0; i < extraSearchCount; i += 1) {
-    visitSearch(thinkFn, followUpZeroResultRate, `extra_${i + 1}`);
-  }
-
-  for (let i = 0; i < extraPriceHeavyPdpCount; i += 1) {
-    visitProductDetails(thinkFn, true);
-  }
-
-  // Final empty browse for a naturally sparse catalog surface
+function visitEmptyBrowse(thinkFn) {
   http.get(`${BASE_URL}/gift-cards`, { tags: { name: 'empty_category' } });
   thinkFn();
 }
 
-export function baselineScenario() {
-  fullJourney({
-    thinkFn: think,
-    followUpZeroResultRate: 0.2,
-  });
+function runIntenseLoop() {
+  const totalPdpCount = INTENSE_CONFIG.priceHeavyPdpCount + INTENSE_CONFIG.regularPdpCount;
+  const roundCount = Math.max(INTENSE_CONFIG.browseCount, INTENSE_CONFIG.searchCount, totalPdpCount);
+
+  for (let i = 0; i < roundCount; i += 1) {
+    if (i < INTENSE_CONFIG.browseCount) {
+      browseListing(thinkFast);
+    }
+
+    if (i < INTENSE_CONFIG.priceHeavyPdpCount) {
+      visitProductDetails(thinkFast, true);
+    } else if (i < totalPdpCount) {
+      visitProductDetails(thinkFast);
+    }
+
+    if (i < INTENSE_CONFIG.searchCount) {
+      visitSearch(thinkFast, INTENSE_CONFIG.searchZeroResultRate, `intense_${i + 1}`);
+    }
+  }
+
+  for (let i = 0; i < INTENSE_CONFIG.emptyBrowseCount; i += 1) {
+    visitEmptyBrowse(thinkFast);
+  }
 }
 
 export function intenseScenario() {
-  fullJourney({
-    thinkFn: thinkFast,
-    followUpZeroResultRate: 0.35,
-    extraBrowseCount: 1,
-    extraSearchCount: 1,
-    extraPriceHeavyPdpCount: 1,
-  });
+  runIntenseLoop();
 }

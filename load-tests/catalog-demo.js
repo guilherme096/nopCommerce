@@ -3,11 +3,12 @@ import { sleep } from 'k6';
 
 export const options = {
   scenarios: {
-    demo_normal: {
+    demo_baseline: {
       executor: 'constant-vus',
-      vus: 4,
-      duration: '5h',
-      exec: 'demoNormalScenario',
+      vus: 25,
+      duration: '5m',
+      startTime: '0s',
+      exec: 'demoBaselineScenario',
     },
   },
   thresholds: {
@@ -68,7 +69,7 @@ function pickSearchTerm(zeroResultRate) {
   return { term, useZeroResultTerm };
 }
 
-function browseListing() {
+function browseListing(thinkFn) {
   if (Math.random() < 0.6) {
     const category = pick(CATEGORIES);
     http.get(`${BASE_URL}/${category}`, { tags: { name: 'category_browse_demo' } });
@@ -77,19 +78,19 @@ function browseListing() {
     http.get(`${BASE_URL}/${manufacturer}`, { tags: { name: 'manufacturer_browse_demo' } });
   }
 
-  thinkNormal();
+  thinkFn();
 }
 
-function visitProductDetails(preferPriceHeavy = false) {
+function visitProductDetails(thinkFn, preferPriceHeavy = false) {
   const productPool = preferPriceHeavy ? PRICE_HEAVY_PRODUCTS : PRODUCTS;
   const product = pick(productPool);
   const tagName = preferPriceHeavy ? 'pdp_demo_price_heavy' : 'pdp_demo';
 
   http.get(`${BASE_URL}/${product}`, { tags: { name: tagName } });
-  thinkNormal();
+  thinkFn();
 }
 
-function visitSearch(zeroResultRate, tagSuffix = 'primary') {
+function visitSearch(thinkFn, zeroResultRate, tagSuffix = 'primary') {
   const { term, useZeroResultTerm } = pickSearchTerm(zeroResultRate);
   const searchTag = useZeroResultTerm ? `search_demo_zero_${tagSuffix}` : `search_demo_${tagSuffix}`;
   const autocompleteTag = useZeroResultTerm ? `autocomplete_demo_zero_${tagSuffix}` : `autocomplete_demo_${tagSuffix}`;
@@ -97,40 +98,70 @@ function visitSearch(zeroResultRate, tagSuffix = 'primary') {
   http.get(`${BASE_URL}/search?q=${encodeURIComponent(term)}`, {
     tags: { name: searchTag },
   });
-  thinkNormal();
+  thinkFn();
 
   http.get(`${BASE_URL}/catalog/searchtermautocomplete?term=${encodeURIComponent(term)}`, {
     tags: { name: autocompleteTag },
   });
-  thinkNormal();
+  thinkFn();
 }
 
-function maybeAddSmallVariation() {
-  if (Math.random() < 0.3) {
-    browseListing();
+function maybeAddSmallVariation({
+  thinkFn,
+  browseChance,
+  priceHeavyChance,
+  searchChance,
+  searchZeroResultRate,
+}) {
+  if (Math.random() < browseChance) {
+    browseListing(thinkFn);
   }
 
-  if (Math.random() < 0.2) {
-    visitProductDetails(true);
+  if (Math.random() < priceHeavyChance) {
+    visitProductDetails(thinkFn, true);
   }
 
-  if (Math.random() < 0.12) {
-    visitSearch(0.1, 'secondary');
+  if (Math.random() < searchChance) {
+    visitSearch(thinkFn, searchZeroResultRate, 'secondary');
   }
 }
 
-export function demoNormalScenario() {
+function runDemoScenario({
+  thinkFn,
+  followUpZeroResultRate,
+  extraBrowseChance,
+  extraPriceHeavyChance,
+  extraSearchChance,
+  extraSearchZeroResultRate,
+}) {
   http.get(BASE_URL + '/', { tags: { name: 'homepage_demo' } });
-  thinkNormal();
+  thinkFn();
 
-  browseListing();
-  visitProductDetails(true);
-  browseListing();
-  visitSearch(0, 'primary');
-  visitSearch(0.12, 'follow_up');
-  visitProductDetails();
-  maybeAddSmallVariation();
+  browseListing(thinkFn);
+  visitProductDetails(thinkFn, true);
+  browseListing(thinkFn);
+  visitSearch(thinkFn, 0, 'primary');
+  visitSearch(thinkFn, followUpZeroResultRate, 'follow_up');
+  visitProductDetails(thinkFn);
+  maybeAddSmallVariation({
+    thinkFn,
+    browseChance: extraBrowseChance,
+    priceHeavyChance: extraPriceHeavyChance,
+    searchChance: extraSearchChance,
+    searchZeroResultRate: extraSearchZeroResultRate,
+  });
 
   http.get(`${BASE_URL}/gift-cards`, { tags: { name: 'empty_category_demo' } });
-  thinkNormal();
+  thinkFn();
+}
+
+export function demoBaselineScenario() {
+  runDemoScenario({
+    thinkFn: thinkNormal,
+    followUpZeroResultRate: 0.05,
+    extraBrowseChance: 0.3,
+    extraPriceHeavyChance: 0.2,
+    extraSearchChance: 0.12,
+    extraSearchZeroResultRate: 0.03,
+  });
 }
