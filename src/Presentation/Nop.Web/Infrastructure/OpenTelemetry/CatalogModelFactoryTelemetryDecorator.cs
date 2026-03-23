@@ -21,6 +21,9 @@ public class CatalogModelFactoryTelemetryDecorator : ICatalogModelFactory
         var stopwatch = Stopwatch.StartNew();
         try
         {
+            CatalogSearchTelemetry.BrowseTotalCounter.Add(1,
+                new KeyValuePair<string, object?>(CatalogSearchTelemetry.BrowseTypeTagName, "category"));
+
             var result = await _inner.PrepareCategoryModelAsync(category, command);
 
             activity?.SetTag(CatalogSearchTelemetry.BrowseResultCountTagName, result.CatalogProductsModel.TotalItems);
@@ -54,6 +57,9 @@ public class CatalogModelFactoryTelemetryDecorator : ICatalogModelFactory
         var stopwatch = Stopwatch.StartNew();
         try
         {
+            CatalogSearchTelemetry.BrowseTotalCounter.Add(1,
+                new KeyValuePair<string, object?>(CatalogSearchTelemetry.BrowseTypeTagName, "category"));
+
             var result = await _inner.PrepareCategoryProductsModelAsync(category, command);
 
             activity?.SetTag(CatalogSearchTelemetry.BrowseResultCountTagName, result.TotalItems);
@@ -78,6 +84,9 @@ public class CatalogModelFactoryTelemetryDecorator : ICatalogModelFactory
         var stopwatch = Stopwatch.StartNew();
         try
         {
+            CatalogSearchTelemetry.BrowseTotalCounter.Add(1,
+                new KeyValuePair<string, object?>(CatalogSearchTelemetry.BrowseTypeTagName, "manufacturer"));
+
             var result = await _inner.PrepareManufacturerModelAsync(manufacturer, command);
 
             activity?.SetTag(CatalogSearchTelemetry.BrowseResultCountTagName, result.CatalogProductsModel.TotalItems);
@@ -102,6 +111,9 @@ public class CatalogModelFactoryTelemetryDecorator : ICatalogModelFactory
         var stopwatch = Stopwatch.StartNew();
         try
         {
+            CatalogSearchTelemetry.BrowseTotalCounter.Add(1,
+                new KeyValuePair<string, object?>(CatalogSearchTelemetry.BrowseTypeTagName, "manufacturer"));
+
             var result = await _inner.PrepareManufacturerProductsModelAsync(manufacturer, command);
 
             activity?.SetTag(CatalogSearchTelemetry.BrowseResultCountTagName, result.TotalItems);
@@ -138,6 +150,9 @@ public class CatalogModelFactoryTelemetryDecorator : ICatalogModelFactory
         var stopwatch = Stopwatch.StartNew();
         try
         {
+            CatalogSearchTelemetry.BrowseTotalCounter.Add(1,
+                new KeyValuePair<string, object?>(CatalogSearchTelemetry.BrowseTypeTagName, "vendor"));
+
             var result = await _inner.PrepareVendorProductsModelAsync(vendor, command);
 
             activity?.SetTag(CatalogSearchTelemetry.BrowseResultCountTagName, result.TotalItems);
@@ -185,6 +200,15 @@ public class CatalogModelFactoryTelemetryDecorator : ICatalogModelFactory
         var hasManufacturerFilter = model.mid > 0;
         var hasVendorFilter = model.vid > 0 && model.asv;
 
+        var metricTags = new System.Diagnostics.TagList
+        {
+            { CatalogSearchTelemetry.HasSearchTermTagName, hasSearchTerm },
+            { CatalogSearchTelemetry.IsAdvancedTagName, isAdvancedSearch },
+            { CatalogSearchTelemetry.HasCategoryFilterTagName, hasCategoryFilter },
+            { CatalogSearchTelemetry.HasManufacturerFilterTagName, hasManufacturerFilter },
+            { CatalogSearchTelemetry.HasVendorFilterTagName, hasVendorFilter }
+        };
+
         using var searchActivity = CatalogSearchTelemetry.ActivitySource.StartActivity(CatalogSearchTelemetry.SearchActivityName);
         searchActivity?.SetTag(CatalogSearchTelemetry.HasSearchTermTagName, hasSearchTerm);
         searchActivity?.SetTag(CatalogSearchTelemetry.IsAdvancedTagName, isAdvancedSearch);
@@ -192,23 +216,14 @@ public class CatalogModelFactoryTelemetryDecorator : ICatalogModelFactory
         searchActivity?.SetTag(CatalogSearchTelemetry.HasManufacturerFilterTagName, hasManufacturerFilter);
         searchActivity?.SetTag(CatalogSearchTelemetry.HasVendorFilterTagName, hasVendorFilter);
 
+        CatalogSearchTelemetry.SearchTotalCounter.Add(1, metricTags);
+
         var result = await _inner.PrepareSearchModelAsync(model, command);
 
         searchActivity?.SetTag(CatalogSearchTelemetry.ResultCountTagName, result.CatalogProductsModel.TotalItems);
 
         if (result.CatalogProductsModel.TotalItems == 0)
-        {
-            var metricTags = new System.Diagnostics.TagList
-            {
-                { CatalogSearchTelemetry.HasSearchTermTagName, hasSearchTerm },
-                { CatalogSearchTelemetry.IsAdvancedTagName, isAdvancedSearch },
-                { CatalogSearchTelemetry.HasCategoryFilterTagName, hasCategoryFilter },
-                { CatalogSearchTelemetry.HasManufacturerFilterTagName, hasManufacturerFilter },
-                { CatalogSearchTelemetry.HasVendorFilterTagName, hasVendorFilter }
-            };
-
             CatalogSearchTelemetry.SearchZeroResultsCounter.Add(1, metricTags);
-        }
 
         return result;
     }
@@ -221,6 +236,15 @@ public class CatalogModelFactoryTelemetryDecorator : ICatalogModelFactory
         var hasManufacturerFilter = searchModel.mid > 0;
         var hasVendorFilter = searchModel.vid > 0 && searchModel.asv;
 
+        var metricTags = new System.Diagnostics.TagList
+        {
+            { CatalogSearchTelemetry.HasSearchTermTagName, hasSearchTerm },
+            { CatalogSearchTelemetry.IsAdvancedTagName, isAdvancedSearch },
+            { CatalogSearchTelemetry.HasCategoryFilterTagName, hasCategoryFilter },
+            { CatalogSearchTelemetry.HasManufacturerFilterTagName, hasManufacturerFilter },
+            { CatalogSearchTelemetry.HasVendorFilterTagName, hasVendorFilter }
+        };
+
         using var searchActivity = CatalogSearchTelemetry.ActivitySource.StartActivity(CatalogSearchTelemetry.SearchActivityName);
         searchActivity?.SetTag(CatalogSearchTelemetry.HasSearchTermTagName, hasSearchTerm);
         searchActivity?.SetTag(CatalogSearchTelemetry.IsAdvancedTagName, isAdvancedSearch);
@@ -228,23 +252,14 @@ public class CatalogModelFactoryTelemetryDecorator : ICatalogModelFactory
         searchActivity?.SetTag(CatalogSearchTelemetry.HasManufacturerFilterTagName, hasManufacturerFilter);
         searchActivity?.SetTag(CatalogSearchTelemetry.HasVendorFilterTagName, hasVendorFilter);
 
+        CatalogSearchTelemetry.SearchTotalCounter.Add(1, metricTags);
+
         var result = await _inner.PrepareSearchProductsModelAsync(searchModel, command);
 
         searchActivity?.SetTag(CatalogSearchTelemetry.ResultCountTagName, result.TotalItems);
 
         if (result.TotalItems == 0)
-        {
-            var metricTags = new System.Diagnostics.TagList
-            {
-                { CatalogSearchTelemetry.HasSearchTermTagName, hasSearchTerm },
-                { CatalogSearchTelemetry.IsAdvancedTagName, isAdvancedSearch },
-                { CatalogSearchTelemetry.HasCategoryFilterTagName, hasCategoryFilter },
-                { CatalogSearchTelemetry.HasManufacturerFilterTagName, hasManufacturerFilter },
-                { CatalogSearchTelemetry.HasVendorFilterTagName, hasVendorFilter }
-            };
-
             CatalogSearchTelemetry.SearchZeroResultsCounter.Add(1, metricTags);
-        }
 
         return result;
     }

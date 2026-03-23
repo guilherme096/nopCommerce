@@ -33,6 +33,7 @@ public partial class Program
                 .AddSource(CatalogSearchTelemetry.ActivitySourceName)
                 .AddOtlpExporter())
             .WithMetrics(metrics => metrics
+                .AddAspNetCoreInstrumentation()
                 .AddMeter(CatalogSearchTelemetry.MeterName)
                 .AddOtlpExporter());
 

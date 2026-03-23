@@ -36,4 +36,14 @@ public static class CatalogSearchTelemetry
         "catalog_browse_zero_results_total",
         unit: "{browse}",
         description: "Total catalog browse requests that returned zero products.");
+
+    public static readonly Counter<long> SearchTotalCounter = Meter.CreateCounter<long>(
+        "catalog_search_total",
+        unit: "{search}",
+        description: "Total number of catalog search requests.");
+
+    public static readonly Counter<long> BrowseTotalCounter = Meter.CreateCounter<long>(
+        "catalog_browse_total",
+        unit: "{browse}",
+        description: "Total number of catalog browse requests.");
 }

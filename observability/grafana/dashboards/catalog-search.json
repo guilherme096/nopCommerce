@@ -4,7 +4,7 @@
   "tags": ["nopcommerce", "catalog", "search", "product-details", "browse"],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 3,
+  "version": 5,
   "refresh": "30s",
   "time": {
     "from": "now-1h",
@@ -13,22 +13,24 @@
   "panels": [
     {
       "id": 1,
-      "title": "Zero-result searches (15m)",
-      "type": "stat",
-      "gridPos": { "h": 5, "w": 12, "x": 0, "y": 0 },
+      "title": "Zero-Result Events (15m)",
+      "type": "gauge",
+      "gridPos": { "h": 7, "w": 6, "x": 0, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(catalog_search_zero_results_total[15m]))",
+          "expr": "sum(increase(catalog_search_zero_results_total[15m])) + sum(increase(catalog_browse_zero_results_total[15m]))",
           "instant": true,
-          "legendFormat": "zero-result searches"
+          "legendFormat": "Zero-results"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "unit": "short",
           "decimals": 0,
+          "min": 0,
+          "max": 150,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -44,16 +46,54 @@
         "reduceOptions": {
           "calcs": ["lastNotNull"]
         },
-        "colorMode": "background",
-        "graphMode": "none",
-        "textMode": "value_and_name"
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true
+      }
+    },
+    {
+      "id": 12,
+      "title": "Zero-Result Events (1h)",
+      "type": "gauge",
+      "gridPos": { "h": 7, "w": 6, "x": 6, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(catalog_search_zero_results_total[1h])) + sum(increase(catalog_browse_zero_results_total[1h]))",
+          "instant": true,
+          "legendFormat": "Zero-results"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "min": 0,
+          "max": 150,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 20 },
+              { "color": "red", "value": 60 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true
       }
     },
     {
       "id": 2,
       "title": "PDP build p95 (15m)",
       "type": "stat",
-      "gridPos": { "h": 5, "w": 12, "x": 12, "y": 0 },
+      "gridPos": { "h": 7, "w": 6, "x": 12, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
@@ -88,139 +128,23 @@
       }
     },
     {
-      "id": 3,
-      "title": "Zero-result searches trend (rolling 5m)",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
+      "id": 13,
+      "title": "PDP build p95 (1h)",
+      "type": "stat",
+      "gridPos": { "h": 7, "w": 6, "x": 18, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(catalog_search_zero_results_total[5m]))",
-          "legendFormat": "zero-result searches"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "decimals": 0,
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "smooth",
-            "fillOpacity": 20,
-            "pointSize": 4,
-            "showPoints": "auto",
-            "lineWidth": 2
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "tooltip": { "mode": "single" },
-        "legend": { "displayMode": "list", "placement": "bottom" }
-      }
-    },
-    {
-      "id": 4,
-      "title": "PDP build duration (p50 / p95 / p99)",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 5 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(catalog_product_details_model_build_duration_milliseconds_bucket[5m])))",
-          "legendFormat": "p50"
-        },
-        {
-          "refId": "B",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(catalog_product_details_model_build_duration_milliseconds_bucket[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(catalog_product_details_model_build_duration_milliseconds_bucket[1h])))",
+          "instant": true,
           "legendFormat": "p95"
-        },
-        {
-          "refId": "C",
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(catalog_product_details_model_build_duration_milliseconds_bucket[5m])))",
-          "legendFormat": "p99"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "unit": "ms",
           "decimals": 0,
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "smooth",
-            "fillOpacity": 12,
-            "pointSize": 4,
-            "showPoints": "auto",
-            "lineWidth": 2
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "tooltip": { "mode": "multi", "sort": "desc" },
-        "legend": { "displayMode": "list", "placement": "bottom" }
-      }
-    },
-    {
-      "id": 5,
-      "title": "Zero-result search contexts (1h)",
-      "type": "bargauge",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 13 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "topk(6, sum by (catalog_search_has_search_term, catalog_search_is_advanced, catalog_search_has_category_filter, catalog_search_has_manufacturer_filter, catalog_search_has_vendor_filter) (increase(catalog_search_zero_results_total[1h])))",
-          "legendFormat": "term={{catalog_search_has_search_term}}, adv={{catalog_search_is_advanced}}, cat={{catalog_search_has_category_filter}}, man={{catalog_search_has_manufacturer_filter}}, vendor={{catalog_search_has_vendor_filter}}",
-          "instant": true
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "decimals": 0,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 2 },
-              { "color": "red", "value": 6 }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "displayMode": "basic",
-        "orientation": "horizontal",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"]
-        },
-        "showUnfilled": false
-      }
-    },
-    {
-      "id": 6,
-      "title": "PDP build p95 by association (15m)",
-      "type": "bargauge",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 13 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "histogram_quantile(0.95, sum by (le, product_is_associated) (rate(catalog_product_details_model_build_duration_milliseconds_bucket[15m])))",
-          "legendFormat": "associated={{product_is_associated}}",
-          "instant": true
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "ms",
-          "decimals": 0,
-          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -233,73 +157,37 @@
         "overrides": []
       },
       "options": {
-        "displayMode": "basic",
-        "orientation": "horizontal",
         "reduceOptions": {
           "calcs": ["lastNotNull"]
         },
-        "showUnfilled": false
+        "colorMode": "background",
+        "graphMode": "none",
+        "textMode": "value_and_name"
       }
     },
     {
-      "id": 7,
-      "title": "Browse Model Build Duration (p50/p95/p99)",
+      "id": 3,
+      "title": "Zero-Result Percentage",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 21 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 7 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.50, sum by (le, catalog_browse_type) (rate(catalog_browse_model_build_duration_milliseconds_bucket[5m])))",
-          "legendFormat": "p50 {{catalog_browse_type}}"
+          "expr": "sum(rate(catalog_search_zero_results_total[1m])) / sum(rate(catalog_search_total[1m]))",
+          "legendFormat": "Search",
+          "interval": "1m"
         },
         {
           "refId": "B",
-          "expr": "histogram_quantile(0.95, sum by (le, catalog_browse_type) (rate(catalog_browse_model_build_duration_milliseconds_bucket[5m])))",
-          "legendFormat": "p95 {{catalog_browse_type}}"
-        },
-        {
-          "refId": "C",
-          "expr": "histogram_quantile(0.99, sum by (le, catalog_browse_type) (rate(catalog_browse_model_build_duration_milliseconds_bucket[5m])))",
-          "legendFormat": "p99 {{catalog_browse_type}}"
+          "expr": "sum(rate(catalog_browse_zero_results_total[1m])) / sum(rate(catalog_browse_total[1m]))",
+          "legendFormat": "Browse",
+          "interval": "1m"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "ms",
-          "decimals": 0,
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "smooth",
-            "fillOpacity": 12,
-            "pointSize": 4,
-            "showPoints": "auto",
-            "lineWidth": 2
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "tooltip": { "mode": "multi", "sort": "desc" },
-        "legend": { "displayMode": "list", "placement": "bottom" }
-      }
-    },
-    {
-      "id": 8,
-      "title": "Browse Zero-Results Rate",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 21 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "sum by (catalog_browse_type) (rate(catalog_browse_zero_results_total[5m]))",
-          "legendFormat": "{{catalog_browse_type}}"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
+          "unit": "percentunit",
           "decimals": 2,
           "custom": {
             "drawStyle": "line",
@@ -318,26 +206,121 @@
       }
     },
     {
-      "id": 9,
-      "title": "Product Overview Build Duration (p50/p95/p99)",
+      "id": 4,
+      "title": "PDP build duration (p50 / p95 / p99)",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 29 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 7 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(catalog_product_overview_models_build_duration_milliseconds_bucket[5m])))",
-          "legendFormat": "p50"
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(catalog_product_details_model_build_duration_milliseconds_bucket[1m])))",
+          "legendFormat": "p50",
+          "interval": "1m"
         },
         {
           "refId": "B",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(catalog_product_overview_models_build_duration_milliseconds_bucket[5m])))",
-          "legendFormat": "p95"
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(catalog_product_details_model_build_duration_milliseconds_bucket[1m])))",
+          "legendFormat": "p95",
+          "interval": "1m"
         },
         {
           "refId": "C",
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(catalog_product_overview_models_build_duration_milliseconds_bucket[5m])))",
-          "legendFormat": "p99"
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(catalog_product_details_model_build_duration_milliseconds_bucket[1m])))",
+          "legendFormat": "p99",
+          "interval": "1m"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "decimals": 0,
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 12,
+            "pointSize": 4,
+            "showPoints": "auto",
+            "lineWidth": 2
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      }
+    },
+    {
+      "id": 7,
+      "title": "Browse Model Build Duration (p50/p95/p99)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.50, sum by (le, catalog_browse_type) (rate(catalog_browse_model_build_duration_milliseconds_bucket[1m])))",
+          "legendFormat": "p50 {{catalog_browse_type}}",
+          "interval": "1m"
+        },
+        {
+          "refId": "B",
+          "expr": "histogram_quantile(0.95, sum by (le, catalog_browse_type) (rate(catalog_browse_model_build_duration_milliseconds_bucket[1m])))",
+          "legendFormat": "p95 {{catalog_browse_type}}",
+          "interval": "1m"
+        },
+        {
+          "refId": "C",
+          "expr": "histogram_quantile(0.99, sum by (le, catalog_browse_type) (rate(catalog_browse_model_build_duration_milliseconds_bucket[1m])))",
+          "legendFormat": "p99 {{catalog_browse_type}}",
+          "interval": "1m"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "decimals": 0,
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 12,
+            "pointSize": 4,
+            "showPoints": "auto",
+            "lineWidth": 2
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      }
+    },
+    {
+      "id": 9,
+      "title": "Product Overview Build Duration (p50/p95/p99)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(catalog_product_overview_models_build_duration_milliseconds_bucket[1m])))",
+          "legendFormat": "p50",
+          "interval": "1m"
+        },
+        {
+          "refId": "B",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(catalog_product_overview_models_build_duration_milliseconds_bucket[1m])))",
+          "legendFormat": "p95",
+          "interval": "1m"
+        },
+        {
+          "refId": "C",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(catalog_product_overview_models_build_duration_milliseconds_bucket[1m])))",
+          "legendFormat": "p99",
+          "interval": "1m"
         }
       ],
       "fieldConfig": {
@@ -364,13 +347,14 @@
       "id": 10,
       "title": "Product Overview Build Duration by Price Prep",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 29 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 23 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.95, sum by (le, product_prepare_price) (rate(catalog_product_overview_models_build_duration_milliseconds_bucket[5m])))",
-          "legendFormat": "p95 prepare_price={{product_prepare_price}}"
+          "expr": "histogram_quantile(0.95, sum by (le, product_prepare_price) (rate(catalog_product_overview_models_build_duration_milliseconds_bucket[1m])))",
+          "legendFormat": "p95 prepare_price={{product_prepare_price}}",
+          "interval": "1m"
         }
       ],
       "fieldConfig": {
@@ -390,6 +374,48 @@
       },
       "options": {
         "tooltip": { "mode": "multi", "sort": "desc" },
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      }
+    },
+    {
+      "id": 11,
+      "title": "HTTP 5xx Error Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 31 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"5..\"}[1m])) / sum(rate(http_server_request_duration_seconds_count[1m]))",
+          "legendFormat": "5xx error rate",
+          "interval": "1m"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 2,
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "fillOpacity": 20,
+            "pointSize": 4,
+            "showPoints": "auto",
+            "lineWidth": 2
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.01 },
+              { "color": "red", "value": 0.05 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": { "mode": "single" },
         "legend": { "displayMode": "list", "placement": "bottom" }
       }
     }
