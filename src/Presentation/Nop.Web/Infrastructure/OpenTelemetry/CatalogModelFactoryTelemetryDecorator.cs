@@ -8,6 +8,8 @@ namespace Nop.Web.Infrastructure.OpenTelemetry;
 
 public class CatalogModelFactoryTelemetryDecorator : ICatalogModelFactory
 {
+    private const int MAX_ZERO_RESULT_SEARCH_TERM_LENGTH = 120;
+
     private readonly ICatalogModelFactory _inner;
 
     public CatalogModelFactoryTelemetryDecorator(ICatalogModelFactory inner)
@@ -194,7 +196,8 @@ public class CatalogModelFactoryTelemetryDecorator : ICatalogModelFactory
 
     public async Task<SearchModel> PrepareSearchModelAsync(SearchModel model, CatalogProductsCommand command)
     {
-        var hasSearchTerm = !string.IsNullOrEmpty(model.q);
+        var normalizedSearchTerm = NormalizeSearchTerm(model.q);
+        var hasSearchTerm = !string.IsNullOrEmpty(normalizedSearchTerm);
         var isAdvancedSearch = model.advs;
         var hasCategoryFilter = model.cid > 0;
         var hasManufacturerFilter = model.mid > 0;
@@ -223,14 +226,18 @@ public class CatalogModelFactoryTelemetryDecorator : ICatalogModelFactory
         searchActivity?.SetTag(CatalogSearchTelemetry.ResultCountTagName, result.CatalogProductsModel.TotalItems);
 
         if (result.CatalogProductsModel.TotalItems == 0)
+        {
+            AddZeroResultSearchTermTag(searchActivity, normalizedSearchTerm);
             CatalogSearchTelemetry.SearchZeroResultsCounter.Add(1, metricTags);
+        }
 
         return result;
     }
 
     public async Task<CatalogProductsModel> PrepareSearchProductsModelAsync(SearchModel searchModel, CatalogProductsCommand command)
     {
-        var hasSearchTerm = !string.IsNullOrEmpty(searchModel.q);
+        var normalizedSearchTerm = NormalizeSearchTerm(searchModel.q);
+        var hasSearchTerm = !string.IsNullOrEmpty(normalizedSearchTerm);
         var isAdvancedSearch = searchModel.advs;
         var hasCategoryFilter = searchModel.cid > 0;
         var hasManufacturerFilter = searchModel.mid > 0;
@@ -259,9 +266,32 @@ public class CatalogModelFactoryTelemetryDecorator : ICatalogModelFactory
         searchActivity?.SetTag(CatalogSearchTelemetry.ResultCountTagName, result.TotalItems);
 
         if (result.TotalItems == 0)
+        {
+            AddZeroResultSearchTermTag(searchActivity, normalizedSearchTerm);
             CatalogSearchTelemetry.SearchZeroResultsCounter.Add(1, metricTags);
+        }
 
         return result;
+    }
+
+    private static void AddZeroResultSearchTermTag(Activity activity, string searchTerm)
+    {
+        if (activity == null || string.IsNullOrEmpty(searchTerm))
+            return;
+
+        activity.SetTag(CatalogSearchTelemetry.SearchTermTagName, searchTerm);
+    }
+
+    private static string NormalizeSearchTerm(string searchTerm)
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+            return string.Empty;
+
+        searchTerm = searchTerm.Trim();
+
+        return searchTerm.Length <= MAX_ZERO_RESULT_SEARCH_TERM_LENGTH
+            ? searchTerm
+            : searchTerm[..MAX_ZERO_RESULT_SEARCH_TERM_LENGTH];
     }
 
     public Task<CatalogProductsModel> PrepareSearchProductsByFilterLevelValuesModelAsync(SearchFilterLevelValueModel searchModel, CatalogProductsCommand command)

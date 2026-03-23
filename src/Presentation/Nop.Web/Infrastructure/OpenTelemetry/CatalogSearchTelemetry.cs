@@ -10,6 +10,7 @@ public static class CatalogSearchTelemetry
     public const string SearchActivityName = "catalog.search";
 
     public const string ResultCountTagName = "catalog.search.result_count";
+    public const string SearchTermTagName = "catalog.search.term";
     public const string HasSearchTermTagName = "catalog.search.has_search_term";
     public const string IsAdvancedTagName = "catalog.search.is_advanced";
     public const string HasCategoryFilterTagName = "catalog.search.has_category_filter";

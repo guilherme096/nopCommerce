@@ -147,3 +147,10 @@ This metric is still shared across several pieces of list rendering. It is a goo
 The dashboard compares product overview build time with `prepare_price=true` and `prepare_price=false`.
 
 That split is useful because it helps answer a practical question: is the slowdown in general listing work, or is it caused by pricing? If the `prepare_price=true` series is much worse, pricing is the first place to look.
+
+## Instrumentation notes
+
+- Raw search terms are still excluded from metrics.
+- For traces, the raw term is only added to zero-result `catalog.search` spans. That keeps the signal useful for debugging while avoiding unnecessary exposure on successful searches.
+- The term is trimmed and capped before being added to the span.
+- `product.id` on the PDP duration metric is still higher-cardinality than ideal and is worth removing in a follow-up.
