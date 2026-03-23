@@ -13,14 +13,14 @@
   "panels": [
     {
       "id": 1,
-      "title": "Zero-Result Events (15m)",
+      "title": "Zero-Result Events (2m)",
       "type": "stat",
       "gridPos": { "h": 7, "w": 6, "x": 0, "y": 7 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(increase(catalog_search_zero_results_total[15m])) + sum(increase(catalog_browse_zero_results_total[15m]))",
+          "expr": "sum(increase(catalog_search_zero_results_total[2m])) + sum(increase(catalog_browse_zero_results_total[2m]))",
           "instant": true,
           "legendFormat": "Zero-results"
         }
@@ -53,9 +53,88 @@
     },
     {
       "id": 14,
-      "title": "Zero-Result % (15m)",
+      "title": "Zero-Result % (2m)",
       "type": "gauge",
       "gridPos": { "h": 7, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(sum(increase(catalog_search_zero_results_total[2m])) + sum(increase(catalog_browse_zero_results_total[2m]))) / (sum(increase(catalog_search_total[2m])) + sum(increase(catalog_browse_total[2m])))",
+          "instant": true,
+          "legendFormat": "Zero-result %"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 1,
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 0.10 },
+              { "color": "red", "value": 0.20 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "showThresholdLabels": true,
+        "showThresholdMarkers": true
+      }
+    },
+    {
+      "id": 12,
+      "title": "Zero-Result Events (15m)",
+      "type": "stat",
+      "gridPos": { "h": 7, "w": 6, "x": 6, "y": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(catalog_search_zero_results_total[15m])) + sum(increase(catalog_browse_zero_results_total[15m]))",
+          "instant": true,
+          "legendFormat": "Zero-results"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "min": 0,
+          "max": 150,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 20 },
+              { "color": "red", "value": 60 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": ["lastNotNull"]
+        },
+        "colorMode": "none",
+        "graphMode": "none",
+        "textMode": "value_and_name"
+      }
+    },
+    {
+      "id": 15,
+      "title": "Zero-Result % (15m)",
+      "type": "gauge",
+      "gridPos": { "h": 7, "w": 6, "x": 6, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
@@ -91,94 +170,15 @@
       }
     },
     {
-      "id": 12,
-      "title": "Zero-Result Events (1h)",
-      "type": "stat",
-      "gridPos": { "h": 7, "w": 6, "x": 6, "y": 7 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "sum(increase(catalog_search_zero_results_total[1h])) + sum(increase(catalog_browse_zero_results_total[1h]))",
-          "instant": true,
-          "legendFormat": "Zero-results"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "decimals": 0,
-          "min": 0,
-          "max": 150,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 20 },
-              { "color": "red", "value": 60 }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "calcs": ["lastNotNull"]
-        },
-        "colorMode": "none",
-        "graphMode": "none",
-        "textMode": "value_and_name"
-      }
-    },
-    {
-      "id": 15,
-      "title": "Zero-Result % (1h)",
-      "type": "gauge",
-      "gridPos": { "h": 7, "w": 6, "x": 6, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "(sum(increase(catalog_search_zero_results_total[1h])) + sum(increase(catalog_browse_zero_results_total[1h]))) / (sum(increase(catalog_search_total[1h])) + sum(increase(catalog_browse_total[1h])))",
-          "instant": true,
-          "legendFormat": "Zero-result %"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percentunit",
-          "decimals": 1,
-          "min": 0,
-          "max": 1,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 0.10 },
-              { "color": "red", "value": 0.20 }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "calcs": ["lastNotNull"]
-        },
-        "showThresholdLabels": true,
-        "showThresholdMarkers": true
-      }
-    },
-    {
       "id": 2,
-      "title": "PDP build p95 (15m)",
+      "title": "PDP build p95 (2m)",
       "type": "stat",
       "gridPos": { "h": 7, "w": 6, "x": 12, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(catalog_product_details_model_build_duration_milliseconds_bucket[15m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(catalog_product_details_model_build_duration_milliseconds_bucket[2m])))",
           "instant": true,
           "legendFormat": "p95"
         }
@@ -209,14 +209,14 @@
     },
     {
       "id": 13,
-      "title": "PDP build p95 (1h)",
+      "title": "PDP build p95 (15m)",
       "type": "stat",
       "gridPos": { "h": 7, "w": 6, "x": 18, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(catalog_product_details_model_build_duration_milliseconds_bucket[1h])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(catalog_product_details_model_build_duration_milliseconds_bucket[15m])))",
           "instant": true,
           "legendFormat": "p95"
         }
