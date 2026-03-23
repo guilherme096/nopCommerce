@@ -21,7 +21,8 @@
         {
           "refId": "A",
           "expr": "sum(increase(catalog_search_zero_results_total[15m]))",
-          "instant": true
+          "instant": true,
+          "legendFormat": "zero-result searches"
         }
       ],
       "fieldConfig": {
@@ -57,8 +58,9 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(catalog_product_details_model_build_duration_bucket[15m])))",
-          "instant": true
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(catalog_product_details_model_build_duration_milliseconds_bucket[15m])))",
+          "instant": true,
+          "legendFormat": "p95"
         }
       ],
       "fieldConfig": {
@@ -127,17 +129,17 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(catalog_product_details_model_build_duration_bucket[5m])))",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(catalog_product_details_model_build_duration_milliseconds_bucket[5m])))",
           "legendFormat": "p50"
         },
         {
           "refId": "B",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(catalog_product_details_model_build_duration_bucket[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(catalog_product_details_model_build_duration_milliseconds_bucket[5m])))",
           "legendFormat": "p95"
         },
         {
           "refId": "C",
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(catalog_product_details_model_build_duration_bucket[5m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(catalog_product_details_model_build_duration_milliseconds_bucket[5m])))",
           "legendFormat": "p99"
         }
       ],
@@ -209,7 +211,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.95, sum by (le, product_is_associated) (rate(catalog_product_details_model_build_duration_bucket[15m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, product_is_associated) (rate(catalog_product_details_model_build_duration_milliseconds_bucket[15m])))",
           "legendFormat": "associated={{product_is_associated}}",
           "instant": true
         }
@@ -248,17 +250,17 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.50, sum by (le, catalog_browse_type) (rate(catalog_browse_model_build_duration_bucket[5m])))",
+          "expr": "histogram_quantile(0.50, sum by (le, catalog_browse_type) (rate(catalog_browse_model_build_duration_milliseconds_bucket[5m])))",
           "legendFormat": "p50 {{catalog_browse_type}}"
         },
         {
           "refId": "B",
-          "expr": "histogram_quantile(0.95, sum by (le, catalog_browse_type) (rate(catalog_browse_model_build_duration_bucket[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, catalog_browse_type) (rate(catalog_browse_model_build_duration_milliseconds_bucket[5m])))",
           "legendFormat": "p95 {{catalog_browse_type}}"
         },
         {
           "refId": "C",
-          "expr": "histogram_quantile(0.99, sum by (le, catalog_browse_type) (rate(catalog_browse_model_build_duration_bucket[5m])))",
+          "expr": "histogram_quantile(0.99, sum by (le, catalog_browse_type) (rate(catalog_browse_model_build_duration_milliseconds_bucket[5m])))",
           "legendFormat": "p99 {{catalog_browse_type}}"
         }
       ],
@@ -324,17 +326,17 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.50, sum by (le) (rate(catalog_product_overview_models_build_duration_bucket[5m])))",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(catalog_product_overview_models_build_duration_milliseconds_bucket[5m])))",
           "legendFormat": "p50"
         },
         {
           "refId": "B",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(catalog_product_overview_models_build_duration_bucket[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(catalog_product_overview_models_build_duration_milliseconds_bucket[5m])))",
           "legendFormat": "p95"
         },
         {
           "refId": "C",
-          "expr": "histogram_quantile(0.99, sum by (le) (rate(catalog_product_overview_models_build_duration_bucket[5m])))",
+          "expr": "histogram_quantile(0.99, sum by (le) (rate(catalog_product_overview_models_build_duration_milliseconds_bucket[5m])))",
           "legendFormat": "p99"
         }
       ],
@@ -367,7 +369,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.95, sum by (le, product_prepare_price) (rate(catalog_product_overview_models_build_duration_bucket[5m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, product_prepare_price) (rate(catalog_product_overview_models_build_duration_milliseconds_bucket[5m])))",
           "legendFormat": "p95 prepare_price={{product_prepare_price}}"
         }
       ],
