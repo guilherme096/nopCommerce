@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Orders;
+using Nop.Web.Framework.Infrastructure.OpenTelemetry;
 using Nop.Web.Factories;
 using Nop.Web.Models.Catalog;
 
@@ -37,6 +38,11 @@ public class ProductModelFactoryTelemetryDecorator : IProductModelFactory
                 preparePictureModel, productThumbPictureSize, prepareSpecificationAttributes,
                 forceRedirectionAfterAddingToCart);
         }
+        catch (Exception exception)
+        {
+            CatalogTracingHelper.MarkException(activity, exception);
+            throw;
+        }
         finally
         {
             stopwatch.Stop();
@@ -63,6 +69,11 @@ public class ProductModelFactoryTelemetryDecorator : IProductModelFactory
         try
         {
             return await _inner.PrepareProductDetailsModelAsync(product, updatecartitem, isAssociatedProduct);
+        }
+        catch (Exception exception)
+        {
+            CatalogTracingHelper.MarkException(activity, exception);
+            throw;
         }
         finally
         {

@@ -1,7 +1,11 @@
-﻿using Nop.Core.Infrastructure;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Nop.Core.Events;
+using Nop.Core.Infrastructure;
+using Nop.Services.Catalog;
 using Nop.Web.Areas.Admin.Factories;
 using Nop.Web.Areas.Admin.Helpers;
 using Nop.Web.Framework.Factories;
+using Nop.Web.Framework.Infrastructure.OpenTelemetry;
 using Nop.Web.Infrastructure.Installation;
 
 namespace Nop.Web.Infrastructure;
@@ -18,6 +22,9 @@ public partial class NopStartup : INopStartup
     /// <param name="configuration">Configuration of the application</param>
     public virtual void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
+        services.Replace(ServiceDescriptor.Scoped<ISearchPluginManager, TracingSearchPluginManager>());
+        services.Replace(ServiceDescriptor.Scoped<IProductService, TracingProductService>());
+        services.Replace(ServiceDescriptor.Singleton<IEventPublisher, TracingEventPublisher>());
         //installation localization service
         services.AddScoped<IInstallationLocalizationService, InstallationLocalizationService>();
 
@@ -101,7 +108,7 @@ public partial class NopStartup : INopStartup
         services.AddScoped<Factories.INewsLetterModelFactory, Factories.NewsLetterModelFactory>();
         services.AddScoped<Factories.IOrderModelFactory, Factories.OrderModelFactory>();
         services.AddScoped<Factories.IPrivateMessagesModelFactory, Factories.PrivateMessagesModelFactory>();
-        services.AddScoped<Factories.ProductModelFactory>();
+        services.AddScoped<Factories.ProductModelFactory, OpenTelemetry.TracingProductModelFactory>();
         services.AddScoped<Factories.IProductModelFactory>(sp =>
             new OpenTelemetry.ProductModelFactoryTelemetryDecorator(
                 sp.GetRequiredService<Factories.ProductModelFactory>()));

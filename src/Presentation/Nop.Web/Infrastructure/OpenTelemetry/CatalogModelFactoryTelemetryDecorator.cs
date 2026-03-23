@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Vendors;
+using Nop.Web.Framework.Infrastructure.OpenTelemetry;
 using Nop.Web.Factories;
 using Nop.Web.Models.Catalog;
 
@@ -8,8 +9,6 @@ namespace Nop.Web.Infrastructure.OpenTelemetry;
 
 public class CatalogModelFactoryTelemetryDecorator : ICatalogModelFactory
 {
-    private const int MAX_ZERO_RESULT_SEARCH_TERM_LENGTH = 120;
-
     private readonly ICatalogModelFactory _inner;
 
     public CatalogModelFactoryTelemetryDecorator(ICatalogModelFactory inner)
@@ -34,6 +33,11 @@ public class CatalogModelFactoryTelemetryDecorator : ICatalogModelFactory
                     new KeyValuePair<string, object?>(CatalogSearchTelemetry.BrowseTypeTagName, "category"));
 
             return result;
+        }
+        catch (Exception exception)
+        {
+            CatalogTracingHelper.MarkException(activity, exception);
+            throw;
         }
         finally
         {
@@ -71,6 +75,11 @@ public class CatalogModelFactoryTelemetryDecorator : ICatalogModelFactory
 
             return result;
         }
+        catch (Exception exception)
+        {
+            CatalogTracingHelper.MarkException(activity, exception);
+            throw;
+        }
         finally
         {
             stopwatch.Stop();
@@ -98,6 +107,11 @@ public class CatalogModelFactoryTelemetryDecorator : ICatalogModelFactory
 
             return result;
         }
+        catch (Exception exception)
+        {
+            CatalogTracingHelper.MarkException(activity, exception);
+            throw;
+        }
         finally
         {
             stopwatch.Stop();
@@ -124,6 +138,11 @@ public class CatalogModelFactoryTelemetryDecorator : ICatalogModelFactory
                     new KeyValuePair<string, object?>(CatalogSearchTelemetry.BrowseTypeTagName, "manufacturer"));
 
             return result;
+        }
+        catch (Exception exception)
+        {
+            CatalogTracingHelper.MarkException(activity, exception);
+            throw;
         }
         finally
         {
@@ -163,6 +182,11 @@ public class CatalogModelFactoryTelemetryDecorator : ICatalogModelFactory
                     new KeyValuePair<string, object?>(CatalogSearchTelemetry.BrowseTypeTagName, "vendor"));
 
             return result;
+        }
+        catch (Exception exception)
+        {
+            CatalogTracingHelper.MarkException(activity, exception);
+            throw;
         }
         finally
         {
@@ -221,17 +245,22 @@ public class CatalogModelFactoryTelemetryDecorator : ICatalogModelFactory
 
         CatalogSearchTelemetry.SearchTotalCounter.Add(1, metricTags);
 
-        var result = await _inner.PrepareSearchModelAsync(model, command);
-
-        searchActivity?.SetTag(CatalogSearchTelemetry.ResultCountTagName, result.CatalogProductsModel.TotalItems);
-
-        if (result.CatalogProductsModel.TotalItems == 0)
+        try
         {
-            AddZeroResultSearchTermTag(searchActivity, normalizedSearchTerm);
-            CatalogSearchTelemetry.SearchZeroResultsCounter.Add(1, metricTags);
-        }
+            var result = await _inner.PrepareSearchModelAsync(model, command);
 
-        return result;
+            searchActivity?.SetTag(CatalogSearchTelemetry.ResultCountTagName, result.CatalogProductsModel.TotalItems);
+
+            if (result.CatalogProductsModel.TotalItems == 0)
+                CatalogSearchTelemetry.SearchZeroResultsCounter.Add(1, metricTags);
+
+            return result;
+        }
+        catch (Exception exception)
+        {
+            CatalogTracingHelper.MarkException(searchActivity, exception);
+            throw;
+        }
     }
 
     public async Task<CatalogProductsModel> PrepareSearchProductsModelAsync(SearchModel searchModel, CatalogProductsCommand command)
@@ -261,25 +290,22 @@ public class CatalogModelFactoryTelemetryDecorator : ICatalogModelFactory
 
         CatalogSearchTelemetry.SearchTotalCounter.Add(1, metricTags);
 
-        var result = await _inner.PrepareSearchProductsModelAsync(searchModel, command);
-
-        searchActivity?.SetTag(CatalogSearchTelemetry.ResultCountTagName, result.TotalItems);
-
-        if (result.TotalItems == 0)
+        try
         {
-            AddZeroResultSearchTermTag(searchActivity, normalizedSearchTerm);
-            CatalogSearchTelemetry.SearchZeroResultsCounter.Add(1, metricTags);
+            var result = await _inner.PrepareSearchProductsModelAsync(searchModel, command);
+
+            searchActivity?.SetTag(CatalogSearchTelemetry.ResultCountTagName, result.TotalItems);
+
+            if (result.TotalItems == 0)
+                CatalogSearchTelemetry.SearchZeroResultsCounter.Add(1, metricTags);
+
+            return result;
         }
-
-        return result;
-    }
-
-    private static void AddZeroResultSearchTermTag(Activity activity, string searchTerm)
-    {
-        if (activity == null || string.IsNullOrEmpty(searchTerm))
-            return;
-
-        activity.SetTag(CatalogSearchTelemetry.SearchTermTagName, searchTerm);
+        catch (Exception exception)
+        {
+            CatalogTracingHelper.MarkException(searchActivity, exception);
+            throw;
+        }
     }
 
     private static string NormalizeSearchTerm(string searchTerm)
@@ -287,11 +313,7 @@ public class CatalogModelFactoryTelemetryDecorator : ICatalogModelFactory
         if (string.IsNullOrWhiteSpace(searchTerm))
             return string.Empty;
 
-        searchTerm = searchTerm.Trim();
-
-        return searchTerm.Length <= MAX_ZERO_RESULT_SEARCH_TERM_LENGTH
-            ? searchTerm
-            : searchTerm[..MAX_ZERO_RESULT_SEARCH_TERM_LENGTH];
+        return searchTerm.Trim();
     }
 
     public Task<CatalogProductsModel> PrepareSearchProductsByFilterLevelValuesModelAsync(SearchFilterLevelValueModel searchModel, CatalogProductsCommand command)
